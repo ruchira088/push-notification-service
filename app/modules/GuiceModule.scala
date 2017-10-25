@@ -6,9 +6,9 @@ import constants.{EnvVariableNames, GeneralConstants}
 import dao.{AccountDAO, RelationalAccountDAO}
 import services.airtable.{AirtableService, AirtableServiceImpl}
 import services.notifications.{ApplePushNotificationService, PushNotificationService}
-import utils.ConfigUtils
+import utils.{ConfigUtils, SystemUtils}
 
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 class GuiceModule extends AbstractModule
 {
@@ -52,7 +52,14 @@ class GuiceModule extends AbstractModule
   def developmentEnvBindings() =
   {
     integratedEnvBindings()
-    bindApnsClient(ApnsClientBuilder.DEVELOPMENT_APNS_HOST)
+
+    bindApnsClient(ApnsClientBuilder.DEVELOPMENT_APNS_HOST) match {
+      case Failure(throwable) => {
+        SystemUtils.terminate(throwable)
+      }
+
+      case _ =>
+    }
 
     println("Development environment bindings have been applied.")
   }
