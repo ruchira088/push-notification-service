@@ -40,10 +40,9 @@ object ScalaUtils
       }
     }
 
-  def predicate(boolean: Boolean, exception: => Exception, onFail: => Unit = {}): Future[Unit] =
+  def predicate(boolean: Boolean, exception: => Exception, onFail: => Unit = {}): Try[Unit] =
     if (boolean)
-      Future.successful(())
+      Success(())
     else
-      Future.failed(exception)
-
+      Failure(exception)
 }

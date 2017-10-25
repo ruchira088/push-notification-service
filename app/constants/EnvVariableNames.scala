@@ -1,0 +1,10 @@
+package constants
+
+object EnvVariableNames
+{
+  val APNS_CERTIFICATE_PATH = "APNS_CERTIFICATE_PATH"
+
+  val AIRTABLE_SERVICE_URL = "AIRTABLE_SERVICE_URL"
+
+  val SCALA_ENV = "SCALA_ENV"
+}
