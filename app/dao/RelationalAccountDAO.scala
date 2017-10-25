@@ -1,12 +1,12 @@
 package dao
 
-import java.util.Date
+import java.sql.Date
 import javax.inject.{Inject, Singleton}
 
 import models.Account
 import org.joda.time.DateTime
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import slick.jdbc.JdbcProfile
+import slick.jdbc.{JdbcProfile, PostgresProfile}
 import slick.lifted.ProvenShape
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,9 +20,9 @@ class RelationalAccountDAO @Inject()(protected val dbConfigProvider: DatabaseCon
 
   private class Accounts(tag: Tag) extends Table[Account](tag, RelationalAccountDAO.TABLE_NAME)
   {
-    implicit val dateColumnType = MappedColumnType.base[DateTime, Date](
+    implicit val yodaDateTimeColumnType = MappedColumnType.base[DateTime, Date](
       yodaDateTime => new Date(yodaDateTime.getMillis),
-      date => new DateTime(date)
+      date => new DateTime(date.toInstant)
     )
 
     def id = column[String]("id")
@@ -34,6 +34,8 @@ class RelationalAccountDAO @Inject()(protected val dbConfigProvider: DatabaseCon
     def mobileNumber = column[String]("mobile_number")
     def email = column[String]("email")
 
+    def pk = primaryKey("pk", id)
+
     override def * : ProvenShape[Account] =
       (id, createdAt, airtableId, deviceToken, suburb, state, mobileNumber, email) <>
         ((Account.apply _).tupled, Account.unapply)
@@ -41,7 +43,7 @@ class RelationalAccountDAO @Inject()(protected val dbConfigProvider: DatabaseCon
 
   private val accountTable = TableQuery[Accounts]
 
-  override def insert(account: Account): Future[Int] = db.run(accountTable += account)
+  override def insert(account: Account): Future[Account] = db.run(accountTable += account).map(_ => account)
 
   override def findByState(state: String): Future[List[Account]] =
     db.run(accountTable.filter(_.state === state).result).map(_.toList)
