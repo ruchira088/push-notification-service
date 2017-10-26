@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 import models.Account
 import org.joda.time.DateTime
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import slick.jdbc.{JdbcProfile, PostgresProfile}
+import slick.jdbc.JdbcProfile
 import slick.lifted.ProvenShape
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,7 +22,7 @@ class RelationalAccountDAO @Inject()(protected val dbConfigProvider: DatabaseCon
   {
     implicit val yodaDateTimeColumnType = MappedColumnType.base[DateTime, Date](
       yodaDateTime => new Date(yodaDateTime.getMillis),
-      date => new DateTime(date.toInstant)
+      date => new DateTime(date)
     )
 
     def id = column[String]("id")

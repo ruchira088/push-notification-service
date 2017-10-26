@@ -22,7 +22,7 @@ class AirtableServiceImpl @Inject()(wsClient: WSClient)
     {
       airtableServiceUrl <- FutureO.fromTry(getAirtableServiceUrl())
 
-      response <- wsClient.url(s"$airtableServiceUrl/${ConfigValues.getQuoteUrlPath( quoteId)}").get()
+      response <- wsClient.url(s"$airtableServiceUrl/${ConfigValues.getQuoteUrlPath(quoteId)}").get()
 
       airtableQuote <-  Future.fromTry(JsonUtils.deserialize[AirtableQuote](response.json))
     }

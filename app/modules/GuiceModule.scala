@@ -4,11 +4,12 @@ import com.google.inject.AbstractModule
 import com.turo.pushy.apns.{ApnsClient, ApnsClientBuilder}
 import constants.{EnvVariableNames, GeneralConstants}
 import dao.{AccountDAO, RelationalAccountDAO}
+import exceptions.UndefinedEnvValueException
 import services.airtable.{AirtableService, AirtableServiceImpl}
-import services.notifications.{ApplePushNotificationService, PushNotificationService}
+import services.notifications.{ApplePushNotificationService, MockPushNotificationService, PushNotificationService}
 import utils.{ConfigUtils, SystemUtils}
 
-import scala.util.{Failure, Try}
+import scala.util.Try
 
 class GuiceModule extends AbstractModule
 {
@@ -30,15 +31,25 @@ class GuiceModule extends AbstractModule
     }
   }
 
-  def bindApnsClient(apnsServer: String): Try[Unit] = for
-    {
+  def bindApnsClient(apnsServer: String): Try[Unit] = {
+    for
+      {
       apnsCertificate <- ApplePushNotificationService.getApnsCertificate()
       apnsClient = ApplePushNotificationService.buildApnsClient(apnsCertificate, apnsServer)
       _ = bind(classOf[ApnsClient]).toInstance(apnsClient)
     } yield ()
+  } recover {
+    case exception: UndefinedEnvValueException => {
+      SystemUtils.terminate(exception)
+    }
+  }
 
   def testEnvBindings() =
   {
+    bind(classOf[AccountDAO]).to(classOf[RelationalAccountDAO])
+    bind(classOf[AirtableService]).to(classOf[AirtableServiceImpl])
+    bind(classOf[PushNotificationService]).to(classOf[MockPushNotificationService])
+
     println("Test environment bindings have been applied.")
   }
 
@@ -53,13 +64,7 @@ class GuiceModule extends AbstractModule
   {
     integratedEnvBindings()
 
-    bindApnsClient(ApnsClientBuilder.DEVELOPMENT_APNS_HOST) match {
-      case Failure(throwable) => {
-        SystemUtils.terminate(throwable)
-      }
-
-      case _ =>
-    }
+    bindApnsClient(ApnsClientBuilder.DEVELOPMENT_APNS_HOST)
 
     println("Development environment bindings have been applied.")
   }

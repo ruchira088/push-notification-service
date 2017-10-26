@@ -1,6 +1,6 @@
 package utils
 
-import exceptions.FormValidationException
+import exceptions.JsonDeserializationException
 import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.mvc.Request
@@ -16,7 +16,7 @@ object JsonUtils
 
   def deserialize[A](jsValue: JsValue)(implicit reads: Reads[A]): Try[A] =
     jsValue.validate[A].fold(
-      formErrors => Failure(FormValidationException(formErrors)),
+      formErrors => Failure(JsonDeserializationException(formErrors)),
       Success(_)
     )
 
