@@ -7,7 +7,8 @@ import models.Account
 import org.joda.time.DateTime
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
-import slick.lifted.ProvenShape
+import slick.lifted.{CanBeQueryCondition, ProvenShape}
+import utils.FutureO
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,10 +44,20 @@ class RelationalAccountDAO @Inject()(protected val dbConfigProvider: DatabaseCon
 
   private val accountTable = TableQuery[Accounts]
 
+  def find[T <: Rep[_]](selectFunction: Accounts => T)(implicit wt: CanBeQueryCondition[T]): Future[List[Account]] =
+    db.run(accountTable.filter(selectFunction).result).map(_.toList)
+
   override def insert(account: Account): Future[Account] = db.run(accountTable += account).map(_ => account)
 
-  override def findByState(state: String): Future[List[Account]] =
-    db.run(accountTable.filter(_.state === state).result).map(_.toList)
+  override def findByState(state: String): Future[List[Account]] = find(_.state === state)
+
+  override def getByDeviceToken(deviceToken: String): FutureO[Account] =
+    FutureO {
+      find(_.deviceToken === deviceToken).map(_.headOption)
+    }
+
+  override def tokenExists(deviceToken: String): Future[Boolean] =
+    db.run(accountTable.filter(_.deviceToken === deviceToken).exists.result)
 }
 
 object RelationalAccountDAO

@@ -15,10 +15,20 @@ case class PushNotificationData(
   notificationData =>
 
   def toMap: Map[String, String] =
-    Json.toJsObject(notificationData).value.toMap
-      .map {
-        case (name, jsValue) => (name, jsValue.as[String])
-      }
+    Map(
+      "eventDate" -> eventDate,
+      "eventTime" -> eventTime,
+      "state" -> state,
+      "suburb" -> suburb,
+      "supplierPayment" -> supplierPayment.toString,
+      "numberOfPeople" -> numberOfPeople.toString
+    )
+//
+//  def toMap: Map[String, String] =
+//    Json.toJsObject(notificationData).value.toMap
+//      .map {
+//        case (name, jsValue) => (name, jsValue.as[String])
+//      }
 }
 
 object PushNotificationData

@@ -27,6 +27,14 @@ case class FutureO[A](future: Future[Option[A]])
         FutureO(Future.failed(FailedPredicateException))
     )
 
+  def recoverWith(futureO: => FutureO[A])(implicit executionContext: ExecutionContext): FutureO[A] =
+    FutureO {
+      future.flatMap {
+        case Some(_) => future
+        case None => futureO.future
+      }
+    }
+
   def flatten(exception: => Exception = EmptyOptionException)(implicit executionContext: ExecutionContext): Future[A] = future.flatMap {
     case Some(value) => Future.successful(value)
     case None => Future.failed(exception)

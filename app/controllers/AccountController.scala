@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import controllers.request.body.CreateAccount
 import dao.AccountDAO
+import exceptions.{EmptyOptionException, UnableToCreateAccountException}
 import models.Account
 import play.api.libs.json.JsValue
 import play.api.mvc.{AbstractController, ControllerComponents, PlayBodyParsers, Request}
@@ -22,7 +23,10 @@ class AccountController @Inject()(
     implicit request: Request[JsValue] => for
       {
         createAccount <- Future.fromTry(deserialize[CreateAccount])
-        account <- accountDAO.insert(Account.fromCreateAccount(createAccount))
+
+        account <- accountDAO.getByDeviceToken(createAccount.deviceToken)
+          .recoverWith(accountDAO.insert(Account.fromCreateAccount(createAccount)))
+          .flatten(UnableToCreateAccountException())
       }
       yield Ok(account.toJson)
   }
