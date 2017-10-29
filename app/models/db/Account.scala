@@ -1,4 +1,4 @@
-package models
+package models.db
 
 import controllers.request.body.CreateAccount
 import org.joda.time.DateTime

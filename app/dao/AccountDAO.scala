@@ -1,6 +1,6 @@
 package dao
 
-import models.Account
+import models.db.Account
 import utils.FutureO
 
 import scala.concurrent.Future

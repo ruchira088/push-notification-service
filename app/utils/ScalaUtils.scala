@@ -31,15 +31,6 @@ object ScalaUtils
       case NonFatal(throwable) => Failure(throwable)
     }
 
-  // TODO Implement the more efficient Java Future to Scala Future conversion
-  def simpleConversionToScalaFuture[A]
-  (javaFuture: concurrent.Future[A])(implicit executionContext: ExecutionContext): Future[A] =
-    Future {
-      blocking {
-        javaFuture.get()
-      }
-    }
-
   def predicate(boolean: Boolean, exception: => Exception, onFail: => Unit = {}): Try[Unit] =
     if (boolean)
       Success(())

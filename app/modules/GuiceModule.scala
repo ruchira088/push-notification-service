@@ -2,14 +2,20 @@ package modules
 
 import com.google.inject.AbstractModule
 import com.turo.pushy.apns.{ApnsClient, ApnsClientBuilder}
+import constants.GeneralConstants._
 import constants.{EnvVariableNames, GeneralConstants}
 import dao.{AccountDAO, RelationalAccountDAO}
 import exceptions.UndefinedEnvValueException
+import models.AppConfiguration
 import services.airtable.{AirtableService, AirtableServiceImpl}
 import services.notifications.{ApplePushNotificationService, MockPushNotificationService, PushNotificationService}
+import utils.ConfigUtils.KeyValuePair
 import utils.{ConfigUtils, SystemUtils}
 
+import scala.concurrent.Await
 import scala.util.Try
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 class GuiceModule extends AbstractModule
 {
@@ -17,11 +23,11 @@ class GuiceModule extends AbstractModule
   {
     ConfigUtils.getEnvValue(EnvVariableNames.SCALA_ENV) match
     {
-      case Some(GeneralConstants.PRODUCTION_ENV_VALUE) => {
+      case Some(PRODUCTION_ENV_VALUE) => {
         productionEnvBindings()
       }
 
-      case Some(GeneralConstants.LOCAL_TEST_ENV_VALUE) => {
+      case Some(LOCAL_TEST_ENV_VALUE) => {
         testEnvBindings()
       }
 
@@ -29,6 +35,18 @@ class GuiceModule extends AbstractModule
         developmentEnvBindings()
       }
     }
+  }
+
+  def bindAppConfiguration(environment: String) =
+  {
+    val appConfigValues = for
+      {
+      applicationInfo <- ConfigUtils.getApplicationInfo()
+      keyValuePairs = applicationInfo :+ KeyValuePair("environment", environment)
+    }
+      yield AppConfiguration(keyValuePairs)
+
+    bind(classOf[AppConfiguration]).toInstance(Await.result(appConfigValues, 30 seconds))
   }
 
   def bindApnsClient(apnsServer: String): Try[Unit] = {
@@ -49,6 +67,7 @@ class GuiceModule extends AbstractModule
     bind(classOf[AccountDAO]).to(classOf[RelationalAccountDAO])
     bind(classOf[AirtableService]).to(classOf[AirtableServiceImpl])
     bind(classOf[PushNotificationService]).to(classOf[MockPushNotificationService])
+    bindAppConfiguration(LOCAL_TEST_ENV_VALUE)
 
     println("Test environment bindings have been applied.")
   }
@@ -65,6 +84,7 @@ class GuiceModule extends AbstractModule
     integratedEnvBindings()
 
     bindApnsClient(ApnsClientBuilder.DEVELOPMENT_APNS_HOST)
+    bindAppConfiguration(DEVELOPMENT_ENV_VALUE)
 
     println("Development environment bindings have been applied.")
   }
@@ -72,7 +92,9 @@ class GuiceModule extends AbstractModule
   def productionEnvBindings() =
   {
     integratedEnvBindings()
+
     bindApnsClient(ApnsClientBuilder.PRODUCTION_APNS_HOST)
+    bindAppConfiguration(PRODUCTION_ENV_VALUE)
 
     println("Production environment bindings have been applied.")
   }

@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import controllers.request.body.CreateAccount
 import dao.AccountDAO
 import exceptions.{EmptyOptionException, UnableToCreateAccountException}
-import models.Account
+import models.db.Account
 import play.api.libs.json.JsValue
 import play.api.mvc.{AbstractController, ControllerComponents, PlayBodyParsers, Request}
 import utils.JsonUtils.deserialize

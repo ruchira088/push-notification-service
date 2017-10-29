@@ -3,7 +3,7 @@ package dao
 import java.sql.Date
 import javax.inject.{Inject, Singleton}
 
-import models.Account
+import models.db.Account
 import org.joda.time.DateTime
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
